@@ -2,7 +2,7 @@
 
 This is my custom [ZMK](https://zmk.dev/) keymap config for the **low profile** Corne (3x6) wireless keyboard.
 
-<img src="./assets/corne_kbd.jpg" style="border-radius: 15px"/>
+<img src="./assets/corne_kbd.jpg" style="border-radius: 60px"/>
 
 ---
 
