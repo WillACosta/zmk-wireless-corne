@@ -28,7 +28,7 @@ layers:
   - K
   - L
   - {t: ;, s: ':'}
-  - .
+  - {t: '$$mdi:apple-keyboard-shift$$', h: .}
   - {t: '$$mdi:keyboard-esc$$', h: '$$mdi:apple-keyboard-control$$'}
   - Z
   - X
@@ -148,7 +148,7 @@ layers:
   - NUMBER
   - {t: '$$mdi:transfer$$', type: trans}
   FN:
-  - '&studio_unlock'
+  - {t: '$$mdi:transfer$$', type: trans}
   - F1
   - F2
   - F3
@@ -161,7 +161,7 @@ layers:
   - F9
   - F10
   - F11
-  - $$mdi:progress-download$$
+  - {t: '$$mdi:transfer$$', type: trans}
   - RGB HUI
   - RGB EFF
   - RGB SAI
@@ -176,7 +176,7 @@ layers:
   - $$mdi:pan-right$$
   - {t: '$$mdi:transfer$$', type: trans}
   - F12
-  - {t: '$$mdi:backup-restore$$', type: bootloader}
+  - {t: '$$mdi:transfer$$', type: trans}
   - RGB HUD
   - RGB EFR
   - RGB SAD
