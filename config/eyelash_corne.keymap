@@ -94,7 +94,7 @@
             display-name = "QWERTY";
             bindings = <
 &kp TAB                  &kp Q  &kp W  &kp E     &kp R  &kp T                             &kp UP                &kp Y       &kp U  &kp I         &kp O    &kp P          &kp BSPC
-&kp LEFT_SHIFT           &kp A  &kp S  &kp D     &kp F  &kp G                   &kp LEFT  &kp ENTER  &kp RIGHT  &kp H       &kp J  &kp K         &kp L    &kp SEMICOLON  &kp APOS
+&kp LEFT_SHIFT           &kp A  &kp S  &kp D     &kp F  &kp G                   &kp LEFT  &kp ENTER  &kp RIGHT  &kp H       &kp J  &kp K         &kp L    &kp SEMICOLON  &mt APOS LEFT_SHIFT
 &mt LEFT_CONTROL ESCAPE  &kp Z  &kp X  &kp C     &kp V  &kp B      &kp SPACE              &kp DOWN              &kp N       &kp M  &kp COMMA     &kp DOT  &kp FSLH       &mt RIGHT_CONTROL ESCAPE
                                        &kp LGUI  &mo 2  &kp SPACE                                               &kp RETURN  &mo 1  &kp LEFT_ALT
             >;
@@ -129,10 +129,10 @@
         outer_layer {
             display-name = "Fn";
             bindings = <
-&studio_unlock  &kp F1           &kp F2           &kp F3           &kp F4           &kp F5                                         &mmv MOVE_UP                     &kp F6          &kp F7          &kp F8        &kp F9           &kp F10  &kp F11
-&bootloader     &rgb_ug RGB_HUI  &rgb_ug RGB_EFF  &rgb_ug RGB_SAI  &rgb_ug RGB_BRI  &rgb_ug RGB_ON                 &mmv MOVE_LEFT  &mkp LCLK       &mmv MOVE_RIGHT  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_RIGHT  &trans   &kp F12
-&sys_reset      &rgb_ug RGB_HUD  &rgb_ug RGB_EFR  &rgb_ug RGB_SAD  &rgb_ug RGB_BRD  &rgb_ug RGB_OFF  &kp C_MUTE                    &mmv MOVE_DOWN                   &mkp MB4        &mkp MB5        &trans        &trans           &trans   &kp CAPS
-                                                  &trans           &trans           &trans                                                                          &trans          &trans          &trans
+&trans  &kp F1           &kp F2           &kp F3           &kp F4           &kp F5                                         &mmv MOVE_UP                     &kp F6          &kp F7          &kp F8        &kp F9           &kp F10  &kp F11
+&trans  &rgb_ug RGB_HUI  &rgb_ug RGB_EFF  &rgb_ug RGB_SAI  &rgb_ug RGB_BRI  &rgb_ug RGB_ON                 &mmv MOVE_LEFT  &mkp LCLK       &mmv MOVE_RIGHT  &msc SCRL_LEFT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_RIGHT  &trans   &kp F12
+&trans  &rgb_ug RGB_HUD  &rgb_ug RGB_EFR  &rgb_ug RGB_SAD  &rgb_ug RGB_BRD  &rgb_ug RGB_OFF  &kp C_MUTE                    &mmv MOVE_DOWN                   &mkp MB4        &mkp MB5        &trans        &trans           &trans   &kp CAPS
+                                          &trans           &trans           &trans                                                                          &trans          &trans          &trans
             >;
 
             sensor-bindings = <&scroll_encoder>;
