@@ -4,3 +4,4 @@ modules/
 tools/
 .west/
 .env
+.DS_Store
