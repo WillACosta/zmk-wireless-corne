@@ -7,111 +7,79 @@ This guide explains how to enable, collect data from, and generate keypress heat
 ## 1. Firmware Setup & Configuration
 
 ### Enabling in this Repository (Eyelash Corne)
-The module is already included in `zephyr/module.yml` and enabled in `config/eyelash_corne.conf`:
+The module is included in `zephyr/module.yml` and enabled in `config/eyelash_corne.conf`:
 
 ```properties
 # === Heatmap Generator ===
 CONFIG_ZMK_HEATMAP=y
-CONFIG_SERIAL=y
-CONFIG_ZMK_USB_LOGGING=y
 ```
 
-
-
-When enabled, your keyboard logs keypress events over the USB serial console (CDC ACM) in real time whenever a key is pressed:
-`HM:<position>,<layer>,<timestamp_ms>`
-
-### Sharing & Integrating into Other ZMK Keyboards
-To use this module on any other ZMK keyboard repository:
-
-1. Add the module to your `config/west.yml`:
-   ```yaml
-   manifest:
-     projects:
-       - name: zmk-heatmap
-         url: https://github.com/WillACosta/zmk_eyelash_corne_firmware
-         revision: feat/heat-map
-         path: modules/zmk-heatmap
-   ```
-
-2. Or copy the `modules/zmk-heatmap` folder into your repo and update your `zephyr/module.yml`:
-   ```yaml
-   name: zmk-config
-   build:
-     cmake: modules/zmk-heatmap
-     kconfig: modules/zmk-heatmap/Kconfig
-     settings:
-       board_root: .
-   ```
-
-3. Add `CONFIG_ZMK_HEATMAP=y` to your keyboard's `.conf` file and build your firmware using GitHub Actions or `west build`.
+When enabled, your keyboard logs matrix positions, layer changes, and resolved keycodes over USB serial (CDC ACM):
+- Position Event: `HM:<position>,<layer>,<timestamp_ms>`
+- Keycode Event: `HM:KC:<usage_page>,<keycode>,<timestamp_ms>`
 
 ---
 
-## 2. Collecting Live Keypress Data
+## 2. CLI Tooling: `zmk-heatmap`
 
-The firmware outputs key press events over the serial console. Use the provided Python collection tool `tools/zmk_heatmap_collect.py`.
+A human-readable CLI tool `zmk-heatmap` is available in the repository root for both data collection and SVG/HTML report generation.
 
-### Option A: Live USB Serial Monitoring (Recommended)
-Plug in your keyboard via USB and run:
-
-```bash
-# Auto-detects ZMK serial port (/dev/tty.usbmodem* or COM*)
-python3 tools/zmk_heatmap_collect.py
-
-# Or specify a custom port / baud rate:
-python3 tools/zmk_heatmap_collect.py --port /dev/tty.usbmodem14101 --output my_keylog.csv
-```
-
-As you type, the tool records every key press event and appends it to `keylog.csv`. Press `Ctrl+C` to end session.
-
-### Option B: Parsing Captured Log Files
-If you captured serial logs using `hid_listen`, `cat /dev/tty.usbmodem* > raw.log`, `screen`, or a terminal emulator:
+### Commands Overview
 
 ```bash
-python3 tools/zmk_heatmap_collect.py --input raw.log --output keylog.csv
+# 1. Collect live data or parse log files with keymap awareness
+./zmk-heatmap collect --keymap=keymap-drawer/eyelash_corne.yaml
+
+# 2. Generate SVG heatmap & interactive HTML report
+./zmk-heatmap generate
 ```
 
-### Output File (`keylog.csv`)
+---
+
+## 3. Data Collection (`zmk-heatmap collect`)
+
+The collector parses incoming logs, cross-referencing your `keymap.yaml` file to resolve physical positions to true key bindings (e.g. distinguishing `ESC` on layer 0 from `Delete` or `!` on layer 1) and detecting multi-key combo actuations.
+
+### Option A: Live USB Serial Monitoring
+Connect your keyboard via USB and run:
+
+```bash
+./zmk-heatmap collect --keymap=keymap-drawer/eyelash_corne.yaml
+```
+- Auto-detects your ZMK serial port (`/dev/tty.usbmodem*` or `COM*`).
+- Displays live feedback as keys and combos are actuated.
+- Saves enriched dataset into `keylog.csv`.
+
+### Option B: Offline Log Ingestion
+If you captured logs via `cat`, `hid_listen`, or terminal logs:
+
+```bash
+./zmk-heatmap collect --input=raw.log --keymap=keymap-drawer/eyelash_corne.yaml --output=keylog.csv
+```
+
+### Enriched Dataset Format (`keylog.csv`)
 ```csv
-position,layer,timestamp
-14,0,10450
-22,0,10820
-3,1,11200
+position,layer,layer_name,key_label,keycode,is_combo,combo_index,timestamp
+13,0,base,ESC/Shift,0x0029,False,-1,10450
+13,1,sym,*,0x0038,False,-1,10820
+22;23,0,base,HOME (Combo),0x004A,True,1,11200
 ```
 
 ---
 
-## 3. Generating Visual Heatmaps
+## 4. Heatmap Generation (`zmk-heatmap generate`)
 
-The heatmap generator tool (`tools/zmk_heatmap_generate.py`) parses your `keylog.csv` data and overlays key press frequencies onto vector SVG layouts produced by **Keymap Drawer**.
-
-### Running the Generator
+The generator parses `keylog.csv` and renders both single-key position heatmaps and combo actuation heatmaps onto Keymap Drawer vector layouts.
 
 ```bash
-python3 tools/zmk_heatmap_generate.py \
-  --keylog keylog.csv \
-  --svg keymap-drawer/eyelash_corne.svg \
-  --output-svg heatmap.svg \
-  --output-html heatmap.html
+./zmk-heatmap generate \
+  --keylog=keylog.csv \
+  --keymap=keymap-drawer/eyelash_corne.yaml \
+  --svg=keymap-drawer/eyelash_corne.svg \
+  --output-svg=heatmap.svg \
+  --output-html=heatmap.html
 ```
 
-### Output Files
-1. **`heatmap.svg`**: Standalone vector SVG keymap styled with heat intensity color fills and press count badges on each key.
-2. **`heatmap.html`**: Self-contained interactive web report featuring:
-   - Summary statistics (Total Presses, Unique Keys Used, Top Active Key).
-   - Dynamic SVG Heatmap display.
-   - Keypress distribution analytics table sorted by frequency.
-
----
-
-## 4. Keymap Drawer Integration Details
-
-The generator leverages Keymap Drawer's native class naming scheme:
-- Keymap Drawer tags every key shape in the SVG output with `class="key keypos-{N}"`, where `{N}` corresponds exactly to ZMK's 0-indexed matrix position `N`.
-- The generator updates key shape fills and glows using a smooth color ramp:
-  - **Unpressed / Base**: `#16171a`
-  - **1% – 25% (Cool)**: `#00e5ff` (Cyan)
-  - **26% – 50% (Medium)**: `#00e676` (Emerald Green)
-  - **51% – 75% (High)**: `#ffea00` (Amber Yellow)
-  - **76% – 100% (Hot)**: `#ff3d00` (Hot Red)
+### Generated Artifacts
+1. **`heatmap.svg`**: High-resolution vector layout styled with heat intensity fills (`Cool Cyan -> Emerald Green -> Yellow -> Hot Red`) on both key shapes (`keypos-{N}`) and combo elements (`combopos-{M}`).
+2. **`heatmap.html`**: Self-contained interactive report with summary cards, SVG layout viewer, and a breakdown of resolved key & combo usage statistics.

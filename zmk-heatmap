@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""
+zmk-heatmap CLI Entrypoint
+Human-readable CLI for ZMK Heatmap data collection and visualization.
+
+Examples:
+  zmk-heatmap collect --keymap=keymap-drawer/eyelash_corne.yaml
+  zmk-heatmap generate
+  zmk-heatmap generate --keylog=keylog.csv --keymap=keymap-drawer/eyelash_corne.yaml
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+# Add tools directory to Python path
+tools_dir = Path(__file__).parent / "tools"
+if str(tools_dir) not in sys.path:
+    sys.path.insert(0, str(tools_dir))
+
+import zmk_heatmap_collect
+import zmk_heatmap_generate
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="zmk-heatmap",
+        description="ZMK Firmware Heatmap Generator with Combo, Layer, and Keycode Resolution"
+    )
+    subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
+
+    # Subcommand: collect
+    collect_parser = subparsers.add_parser("collect", help="Collect live keypress data over USB serial or parse log files")
+    collect_parser.add_argument("--keymap", "-m", default="keymap-drawer/eyelash_corne.yaml", help="Path to keymap YAML file")
+    collect_parser.add_argument("--port", "-p", help="USB serial port (auto-detects ZMK keyboard if omitted)")
+    collect_parser.add_argument("--baud", "-b", type=int, default=115200, help="Baud rate (default: 115200)")
+    collect_parser.add_argument("--input", "-i", help="Input raw log file to parse instead of live serial stream")
+    collect_parser.add_argument("--output", "-o", default="keylog.csv", help="Output CSV file (default: keylog.csv)")
+    collect_parser.add_argument("--combo-window", type=int, default=50, help="Combo time window in ms (default: 50)")
+
+    # Subcommand: generate
+    generate_parser = subparsers.add_parser("generate", help="Generate SVG and interactive HTML heatmaps")
+    generate_parser.add_argument("--keylog", "-k", default="keylog.csv", help="Input keylog CSV file (default: keylog.csv)")
+    generate_parser.add_argument("--keymap", "-m", default="keymap-drawer/eyelash_corne.yaml", help="Input keymap YAML file")
+    generate_parser.add_argument("--svg", "-s", default="keymap-drawer/eyelash_corne.svg", help="Input Keymap Drawer SVG template")
+    generate_parser.add_argument("--output-svg", default="heatmap.svg", help="Output Heatmap SVG path (default: heatmap.svg)")
+    generate_parser.add_argument("--output-html", default="heatmap.html", help="Output Heatmap HTML report path (default: heatmap.html)")
+    generate_parser.add_argument("--title", default="Eyelash Corne Heatmap", help="Report Title")
+
+    args = parser.parse_args()
+
+    if args.command == "collect":
+        layers, layer_names, combos = zmk_heatmap_collect.parse_keymap_yaml(args.keymap)
+        if layer_names:
+            print(f"Loaded keymap: {len(layer_names)} layers ({', '.join(layer_names)}), {len(combos)} combos.")
+
+        if args.input:
+            zmk_heatmap_collect.collect_from_file(args.input, args.output, layers, layer_names, combos, args.combo_window)
+        else:
+            zmk_heatmap_collect.collect_from_serial(args.port, args.baud, args.output, layers, layer_names, combos, args.combo_window)
+
+    elif args.command == "generate":
+        layers, layer_names, combos = zmk_heatmap_generate.parse_keymap_yaml(args.keymap)
+        pos_counts, layer_pos_counts, combo_counts, combo_layer_counts, label_counts, layer_total_counts, total_presses = zmk_heatmap_generate.load_keylog(args.keylog)
+
+        print(f"Loaded keylog: {total_presses:,} total presses across {len(pos_counts)} key positions and {len(combo_counts)} combos.")
+        svg_content = zmk_heatmap_generate.generate_svg_heatmap(args.svg, args.output_svg, pos_counts, layer_pos_counts, combo_counts, combo_layer_counts, layer_names)
+        if svg_content:
+            zmk_heatmap_generate.generate_html_report(args.output_html, svg_content, pos_counts, layer_pos_counts, combo_counts, label_counts, layer_total_counts, total_presses, layer_names, args.title)
+
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()
