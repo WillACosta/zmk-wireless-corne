@@ -201,13 +201,6 @@
             slow-release;
             layers = <0>;
         };
-
-        media_combo {
-            bindings = <&mo 3>;
-            key-positions = <28 43>;
-            layers = <0>;
-            slow-release;
-        };
     };
 
     keymap {
